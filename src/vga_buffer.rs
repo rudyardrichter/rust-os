@@ -2,6 +2,7 @@ use core::fmt;
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
+use x86_64::instructions::interrupts;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -125,7 +126,9 @@ lazy_static! {
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
-    WRITER.lock().write_fmt(args).unwrap();
+    interrupts::without_interrupts(|| {
+        WRITER.lock().write_fmt(args).unwrap();
+    })
 }
 
 #[macro_export]
@@ -146,18 +149,24 @@ fn test_println_simple() {
 
 #[test_case]
 fn test_println_many() {
-    for i in 0..200 {
+    for i in 0..100 {
         println!("test_println_many output {}", i)
     }
 }
 
 #[test_case]
 fn test_println_output() {
+    use fmt::Write;
+
     let s = "Test string";
     println!("{}", s);
-    for (i, c) in s.chars().enumerate() {
-        // -2 because newline at the bottom of the screen after println
-        let screen_char = WRITER.lock().buffer.chars[VGA_BUFFER_HEIGHT - 2][i].read();
-        assert_eq!(char::from(screen_char.ascii_character), c);
-    }
+    interrupts::without_interrupts(|| {
+        let mut writer = WRITER.lock();
+        writeln!(writer, "\n{}", s).expect("writeln failed");
+        for (i, c) in s.chars().enumerate() {
+            // -2 because newline at the bottom of the screen after println
+            let screen_char = writer.buffer.chars[VGA_BUFFER_HEIGHT - 2][i].read();
+            assert_eq!(char::from(screen_char.ascii_character), c);
+        }
+    })
 }
