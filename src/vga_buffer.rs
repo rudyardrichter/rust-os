@@ -138,3 +138,26 @@ macro_rules! println {
     () => ($crate::print!("\n"));
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
 }
+
+#[test_case]
+fn test_println_simple() {
+    println!("test_println_simple output")
+}
+
+#[test_case]
+fn test_println_many() {
+    for i in 0..200 {
+        println!("test_println_many output {}", i)
+    }
+}
+
+#[test_case]
+fn test_println_output() {
+    let s = "Test string";
+    println!("{}", s);
+    for (i, c) in s.chars().enumerate() {
+        // -2 because newline at the bottom of the screen after println
+        let screen_char = WRITER.lock().buffer.chars[VGA_BUFFER_HEIGHT - 2][i].read();
+        assert_eq!(char::from(screen_char.ascii_character), c);
+    }
+}

@@ -1,23 +1,19 @@
-#![cfg_attr(not(test), no_std)]
 #![no_main]
-
-extern crate lazy_static;
-extern crate spin;
-extern crate volatile;
+#![no_std]
 
 use core::panic::PanicInfo;
+use rust_os::println;
 
-mod vga_buffer;
+#[no_mangle]
+pub extern "C" fn _start() -> ! {
+    println!("Hello World{}", "!");
 
+    loop {}
+}
+
+/// This function is called on panic.
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
     loop {}
-}
-
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
-    println!("Hello, world!");
-
-    panic!("the disco");
 }
