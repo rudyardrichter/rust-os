@@ -4,7 +4,7 @@
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
 use rust_os::{hlt_loop, memory, println};
-use x86_64::{structures::paging::Translate, VirtAddr};
+use x86_64::structures::paging::{FrameAllocator, PhysFrame};
 
 entry_point!(kernel_main);
 
@@ -13,10 +13,13 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     println!("Hello World{}", "!");
     rust_os::init();
 
-    let physical_memory_offset = VirtAddr::new(boot_info.physical_memory_offset);
-    let mapper = unsafe { memory::init(physical_memory_offset) };
-    let virt = VirtAddr::new(0xb8000);
-    println!("{:?} -> {:?}", virt, mapper.translate_addr(virt));
+    let mut frame_allocator =
+        unsafe { memory::BootInfoFrameAllocator::init(&boot_info.memory_map) };
+    let mut frame: PhysFrame;
+    for i in 1..=5 {
+        frame = frame_allocator.allocate_frame().expect("no frame");
+        println!("Got frame {}: {:?}", i, frame);
+    }
 
     hlt_loop();
 }

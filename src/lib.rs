@@ -1,6 +1,7 @@
 #![cfg_attr(test, no_main)]
-#![feature(custom_test_frameworks)]
 #![feature(abi_x86_interrupt)]
+#![feature(custom_test_frameworks)]
+#![feature(type_alias_impl_trait)]
 #![no_std]
 #![reexport_test_harness_main = "test_main"]
 #![test_runner(crate::test_runner)]
